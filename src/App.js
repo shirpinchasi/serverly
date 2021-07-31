@@ -1,28 +1,22 @@
-import { useEffect, useState } from 'react';
-import config from "./config/development"
+import { useEffect, useState, useMemo } from 'react';
+import PostServers from './components/postServers';
+import getServers from "./components/getServer";
+import AppBar from "./components/AppBar"
+import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 import './App.css';
 
-function App() {
-  const [users,setUsers] = useState([])
 
-  useEffect(()=>{
-    async function getUsers(){
-      try{
-        const res = await fetch(config.apiUrl ,{
-          credentials : "include",
-        })
-        const fetchUsers = await res.json()
-        setUsers(fetchUsers);
-      }catch(err){
-        console.log(users);
-      }
-    }
-    getUsers()
-  },[])
+
+function App() {
+
+
   return (
+
     <div className="App">
-      {users.map(user => console.log(user))}
+
+      <AppBar/>
     </div>
+
   );
 }
 
