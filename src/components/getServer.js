@@ -2,211 +2,173 @@ import React, { useEffect, useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import EditIcon from '@material-ui/icons/Edit';
 import "./getServers.scss"
-import { Button, Select,MenuItem,FormControl,InputLabel,FormHelperText, Table,TableBody,TableCell, TableContainer,TableHead, TableRow,Paper, Input } from '@material-ui/core';
+import BtnComponent from './buttonTime';
+import { Button, Select, MenuItem, FormControl, InputLabel, FormHelperText, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Input,ButtonGroup } from '@material-ui/core';
+import DisplayComponent from './displayTime';
 
-const useStyles = makeStyles({
-    table: {
-      minWidth: 650,
+const useStyles = makeStyles((theme)=>({
+  table: {
+    minWidth: 650,
+  },
+  root: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    '& > *': {
+      margin: theme.spacing(1),
     },
-  });
+  },
+}));
 
 
 export default function GetServers() {
-  const [servers,setServers] = useState([])
+  const [servers, setServers] = useState([])
+  const [getObject, setObject] = useState({})
+  const [time, setTime] = useState({ms:0,s:0,m:0,h:0})
+  var updatedMs =  updatedS =time.ms,updatedS = time.s, updatedM = time.m, updatedH = time.h;
+  const [interv, setInterv] = useState();
+  const [status, setStatus] = useState(0);
   const classes = useStyles();
-  const [isRunning, setIsRunning]= useState("false")
-  const [change, setChange] = useState("")
-  const [inEditMode, setEditMode] = useState({
-      status : false,
-      rowKey : null
-  });
-  const [unitPrice,setUnitPrice] = useState(null)
+  
+  
 
-  const onEdit = ({id, currentUnitPrice})=>{
-      setEditMode({
-          status:true,
-          rowKey:id
+  const run = () => {
+    if(updatedM === 60){
+      updatedH++;
+      updatedM = 0;
+    }
+    if(updatedS === 60){
+      updatedM++;
+      updatedS = 0;
+    }
+    if(updatedMs === 100){
+      updatedS++;
+      updatedMs = 0;
+    }
+    updatedMs++;
+    return setTime({ms:updatedMs, s:updatedS, m:updatedM, h:updatedH});
+  };
+  const start = () => {
+    run();
+    setStatus(1);
+    setInterv(setInterval(run, 10));
+  };
+  const stop = () => {
+    clearInterval(interv);
+    setStatus(2);
+  };
+  const reset = () => {
+    clearInterval(interv);
+    setStatus(0);
+    setTime({ms:0, s:0, m:0, h:0})
+  };
+  const resume = () => start();
+  
+  async function fetchItems() {
+    try {
+      const res = await fetch("/handler/", {
+        method: "GET"
       })
-      setUnitPrice(currentUnitPrice)
+      const fetchServers = await res.json();
+      setServers(fetchServers)
+      setObject(fetchServers)
+    } catch (err) {
+      console.log(err);
+    }
   }
-  const updateServer = ({id,newUnitPrice})=>{
-      fetch(`/handler/updateServer/${id}`,{
-          method:"PUT",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          credentials: "include",
-          body:JSON.stringify({serverName :newUnitPrice})
+
+  async function deleteServer(id) {
+    try {
+      const res = await fetch(`/handler/deleteServer/${id}`, {
+        method: "DELETE"
       })
-      .then(res => res.json())
-      .then(res =>{
-        
-          console.log(res);
-          oncancel();
-          fetchItems();
-      })
+      refreshPage()
+    } catch (err) {
+      console.log(err);
+    }
+    
   }
   function refreshPage() {
     window.location.reload(false);
-}
-  const onSave =({id, newUnitPrice})=>{
-      updateServer({id, newUnitPrice})
-      refreshPage();
-      console.log("savedd");
-      
   }
 
-  const onCancel =()=>{
-      console.log("canceldd");
-      setEditMode({
-          status:false,
-          rowKey:null
-      })
-      setUnitPrice(null)
-  }
+  const handleIdChange = id => {
+    const clickedOption = servers.find(item => item.id === id);
+    const value = `${clickedOption.id}, ${clickedOption.server.x}`;
+    console.log(value);
+  };
 
   
-  async function fetchItems() {
-    try{
-        const res = await fetch("/handler/",{
-            method:"GET"
-        })
-        const fetchServers = await res.json();
-        setServers(fetchServers)
-    }catch(err){
-        console.log(err);
-    }   
-}
-async function deleteServer(id) {
-    try{
-        const res = await fetch(`/handler/deleteServer/${id}`,{
-            method:"DELETE"
-        })
-        refreshPage(true)
-    }catch(err){
-        console.log(err);
-    }   
-    
-}
-function refreshPage() {
-    window.location.reload(false);
-}
-const handleRunningChange=(e)=>{
-    setIsRunning(e.target.value)
-}
-
-  useEffect(()=>{
-    
-  fetchItems()
-  },[])
-
-
   
+
+  useEffect(() => {
+    fetchItems()
+  }, [])
+
+
+
   return (
     <div className="Servers">
-        <TableContainer component={Paper}>
-      <Table className={classes.table} aria-label="simple table">
-        <TableHead>
-          <TableRow>
-            <TableCell>Server Ip</TableCell>
-            <TableCell align="right">Server Name</TableCell>
-            <TableCell align="right">Time Running</TableCell>
-            <TableCell align="right">Toggle</TableCell>
-            <TableCell align="right">Server Type</TableCell>
-            <TableCell align="right">Price</TableCell>
-            <TableCell align="right">Delete Server</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {servers.map((server) => (
-            <TableRow key={server._id}>
-              <TableCell component="th" scope="row">
-                {server.serverIp}
-              </TableCell>
-              <TableCell align="right">{inEditMode.status&& inEditMode.rowKey === server._id?(
-                  <input value={unitPrice} onChange={(e)=> setUnitPrice(e.target.value)}/>
-                  
-              ):(
-                  server.serverName
-              )
-              }</TableCell>
-              <TableCell align="right">Time</TableCell>
-              <TableCell align="right">
-              <FormControl className={classes.formControl}>
-                                            <InputLabel id="demo-simple-select-required-label"></InputLabel>
-                                            <Select native 
-                                                labelId="demo-simple-select-required-label"
-                                                id="demo-simple-select-required"
-                                                value={isRunning}
-                                                onChange={handleRunningChange}
-                                                className={classes.selectEmpty}
-                                                
-                                            >
-                                                <MenuItem value="">
-                                                    <em>NONE</em>
-                                                </MenuItem>
-                                                <MenuItem value="true" onChange={handleRunningChange}>True</MenuItem>
-                                                <MenuItem value="False"onChange={handleRunningChange}>False</MenuItem>
-                                                
-                                           </Select>
-                                            
-                                        </FormControl>
-                  
-              </TableCell>
-              <TableCell align="right" >{server.serverType}</TableCell>
-              <TableCell align="right">
-              <FormControl className={classes.formControl}>
-                                            <InputLabel id="demo-simple-select-required-label"></InputLabel>
-                                            <Select native 
-                                                labelId="demo-simple-select-required-label"
-                                                id="demo-simple-select-required"
-                                                value={change}
-                                                onChange={handleRunningChange}
-                                                className={classes.selectEmpty}
-                                                
-                                            >
-                                                <MenuItem value="">
-                                                    <em>NONE</em>
-                                                </MenuItem>
-                                                <MenuItem value="true" onChange={handleRunningChange}>EUR</MenuItem>
-                                                <MenuItem value="False"onChange={handleRunningChange}>ILS</MenuItem>
-                                                
-                                           </Select>
-                                            
-                                        </FormControl>
-              </TableCell>
-              
-              <TableCell align="right">
-                  {inEditMode.status && inEditMode.rowKey=== server._id?(
-                      <React.Fragment>
-                      <Button className={"btn-success"}
-                      onClick={()=> onSave({id:server._id, newUnitPrice:unitPrice})}
-                      >
-                          Save
-                      </Button>
-                      <Button className={"btn-secondery"}
-                      style={{marginLeft:8}}
-                      onClick={()=>onCancel()}
-                      >
-                        cancel
-                      </Button>
-                      </React.Fragment>
-                  ):(
-                      <Button className={"btn-primary"}
-                      onClick={()=>onEdit({id:server._id, currentUnitPrice:server.serverName})}
-                      >
-                        <EditIcon fontSize="small"/>
-                      </Button>
-                  )}
-                  <Button onClick={()=>deleteServer(server._id)}>Delete Server</Button>
-              </TableCell>
+      <TableContainer component={Paper}>
+        <Table className={classes.table} aria-label="simple table">
+          <TableHead>
+            <TableRow>
+              <TableCell>Server Ip</TableCell>
+              <TableCell align="right">Server Name</TableCell>
+              <TableCell align="right">Time Running</TableCell>
+              <TableCell align="right">Toggle</TableCell>
+              <TableCell align="right">Server Type</TableCell>
+              <TableCell align="right">Price</TableCell>
+              <TableCell align="right">Delete Server</TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+          </TableHead>
+          <TableBody>
+            {servers.map((server) => (
+              <TableRow key={server._id}>
+                <TableCell component="th" scope="row">
+                  {server.serverIp}
+                </TableCell>
+                <TableCell align="right">{server.serverName}</TableCell>
+                <TableCell align="right">Time : <DisplayComponent time={time}/></TableCell>
+                <TableCell align="right">
+                <BtnComponent status={status} resume={resume} reset={reset} stop={stop} start={start}/>
+                {/* <BtnComponent value={server._id} status={status} resume={resume} reset={reset} stop={stop} start={start}/> */}
+
+                </TableCell>
+                <TableCell>
+                {Object.entries(server.serverType).map(([key,value])=>(
+                  
+
+               <div key={key}>{value} &euro;</div>
+                
+                
+                ))}
+               </TableCell>
+                {/* <TableCell align="right">
+                  
+                  <FormControl className={classes.formControl}>
+                    <InputLabel htmlFor="grouped-native-select"></InputLabel>
+                    <Select native defaultValue="" id="grouped-native-select">
+                      
+                      <optgroup>
+                      <option aria-label="None" value="" />
+                        <option  value={server.serverTypePrice}></option>
+                        <option value={2}>Option 2</option>
+                      </optgroup>
+                    </Select>
+                  </FormControl>
+                </TableCell> */}
+
+                <TableCell align="right">
+                  <Button onClick={() => deleteServer(server._id)}>Delete Server</Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+                
+               <BtnComponent status={status} resume={resume} reset={reset} stop={stop} start={start}/>
+      </TableContainer>
     </div>
   );
-}
-
-
+};
