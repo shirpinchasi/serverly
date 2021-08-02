@@ -139,7 +139,7 @@ export default function GetServers() {
                 {Object.entries(server.serverType).map(([key,value])=>(
                   
                   <TableCell>
-               <div key={key}>{value} &euro;</div>
+               <div key={key}>{console.log(value)} &euro;</div>
                </TableCell>
                 
                 ))}
