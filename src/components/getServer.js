@@ -118,7 +118,7 @@ export default function GetServers() {
               <TableCell align="right">Time Running</TableCell>
               <TableCell align="right">Toggle</TableCell>
               <TableCell align="right">Server Type</TableCell>
-              <TableCell align="right">Price</TableCell>
+              <TableCell align="right">Server Price</TableCell>
               <TableCell align="right">Delete Server</TableCell>
             </TableRow>
           </TableHead>
@@ -135,15 +135,15 @@ export default function GetServers() {
                 {/* <BtnComponent value={server._id} status={status} resume={resume} reset={reset} stop={stop} start={start}/> */}
 
                 </TableCell>
-                <TableCell>
+                
                 {Object.entries(server.serverType).map(([key,value])=>(
                   
-
+                  <TableCell>
                <div key={key}>{value} &euro;</div>
-                
+               </TableCell>
                 
                 ))}
-               </TableCell>
+                
                 {/* <TableCell align="right">
                   
                   <FormControl className={classes.formControl}>

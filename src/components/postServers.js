@@ -59,11 +59,14 @@ export default function PostServers() {
     })
     if (res.status === 201) {
       console.log(values);
-      // refreshPage(true)
+      refreshPage(true)
       console.log("success");
     } else {
       console.log("errorrr");
     }
+  }
+  function refreshPage() {
+    window.location.reload(false);
   }
 
   // async function currency() {
